@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>CNC Rotation Calculator – Y Axis</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #111827;
+      color: #e5e7eb;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+    }
+    .container {
+      background: #1f2937;
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin: 20px;
+      max-width: 640px;
+      width: 100%;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      box-sizing: border-box;
+    }
+    h1 {
+      font-size: 1.3rem;
+      margin-top: 0;
+      margin-bottom: 8px;
+    }
+    p.subtitle {
+      margin-top: 0;
+      font-size: 0.9rem;
+      color: #9ca3af;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px 10px;
+      margin-bottom: 10px;
+    }
+    .field {
+      display: flex;
+      flex-direction: column;
+      font-size: 0.8rem;
+    }
+    label {
+      margin-bottom: 2px;
+    }
+    input[type="number"] {
+      padding: 3px 6px;
+      border-radius: 4px;
+      border: 1px solid #374151;
+      background: #111827;
+      color: #e5e7eb;
+      font-size: 0.85rem;
+    }
+    .row {
+      display: flex;
+      gap: 10px;
+      margin: 8px 0;
+      flex-wrap: wrap;
+    }
+    button {
+      padding: 6px 14px;
+      border-radius: 4px;
+      border: none;
+      background: #2563eb;
+      color: white;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #1d4ed8;
+    }
+    .output {
+      margin-top: 10px;
+      padding: 8px;
+      border-radius: 4px;
+      background: #111827;
+      font-family: "Consolas", "SF Mono", monospace;
+      font-size: 0.9rem;
+      white-space: pre;
+    }
+    .note {
+      margin-top: 6px;
+      font-size: 0.75rem;
+      color: #9ca3af;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>CNC Rotation Calculator – Y Axis</h1>
+    <p class="subtitle">
+      Rotate a 3D point around the Y axis, about a custom center, with optional Z shift.
+    </p>
+
+    <form id="rotationForm">
+      <strong>Point to rotate (X, Y, Z)</strong>
+      <div class="grid">
+        <div class="field">
+          <label for="x">X</label>
+          <input type="number" id="x" step="0.0001" value="0">
+        </div>
+        <div class="field">
+          <label for="y">Y</label>
+          <input type="number" id="y" step="0.0001" value="0">
+        </div>
+        <div class="field">
+          <label for="z">Z</label>
+          <input type="number" id="z" step="0.0001" value="0">
+        </div>
+        <div class="field">
+          <label for="angle">Angle (deg)</label>
+          <input type="number" id="angle" step="0.01" value="0">
+        </div>
+      </div>
+
+      <strong>Center of rotation (Cx, Cy, Cz)</strong>
+      <div class="grid">
+        <div class="field">
+          <label for="cx">Center X</label>
+          <input type="number" id="cx" step="0.0001" value="-14.3700">
+        </div>
+        <div class="field">
+          <label for="cy">Center Y</label>
+          <input type="number" id="cy" step="0.0001" value="0">
+        </div>
+        <div class="field">
+          <label for="cz">Center Z</label>
+          <input type="number" id="cz" step="0.0001" value="-31.8897">
+        </div>
+        <div class="field">
+          <label for="shiftZ">Z shift (+)</label>
+          <input type="number" id="shiftZ" step="0.0001" value="0">
+        </div>
+      </div>
+
+      <div class="row">
+        <button type="submit">Calculate rotation</button>
+      </div>
+    </form>
+
+    <div id="output" class="output">
+      Enter values and click "Calculate rotation".
+    </div>
+
+    <div class="note">
+      New point is rotated about the Y axis. Y value is unchanged by rotation
+      and only shifted if you change it directly.
+    </div>
+  </div>
+
+  <script>
+    function rotateY(x, y, z, angleDeg, cx, cy, cz, shiftZ) {
+      const angleRad = angleDeg * Math.PI / 180;
+
+      const tx = x - cx;
+      const tz = z - cz;
+
+      let newX = Math.cos(angleRad) * tx - Math.sin(angleRad) * tz;
+      let newZ = Math.sin(angleRad) * tx + Math.cos(angleRad) * tz;
+
+      newX += cx;
+      newZ += cz;
+
+      newZ += shiftZ;
+
+      const rx = Math.round(newX * 10000) / 10000;
+      const ry = Math.round(y * 10000) / 10000;
+      const rz = Math.round(newZ * 10000) / 10000;
+
+      return { x: rx, y: ry, z: rz };
+    }
+
+    document.getElementById("rotationForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      const x = parseFloat(document.getElementById("x").value || 0);
+      const y = parseFloat(document.getElementById("y").value || 0);
+      const z = parseFloat(document.getElementById("z").value || 0);
+      const angle = parseFloat(document.getElementById("angle").value || 0);
+
+      const cx = parseFloat(document.getElementById("cx").value || 0);
+      const cy = parseFloat(document.getElementById("cy").value || 0);
+      const cz = parseFloat(document.getElementById("cz").value || 0);
+      const shiftZ = parseFloat(document.getElementById("shiftZ").value || 0);
+
+      const result = rotateY(x, y, z, angle, cx, cy, cz, shiftZ);
+
+      const out = [
+        `Original:  X=${x},  Y=${y},  Z=${z}`,
+        `Center:    Cx=${cx},  Cy=${cy},  Cz=${cz}`,
+        `Angle:     ${angle}°`,
+        `Z shift:   ${shiftZ}`,
+        "",
+        `Rotated:   X'=${result.x},  Y'=${result.y},  Z'=${result.z}`
+      ].join("\n");
+
+      document.getElementById("output").textContent = out;
+    });
+  </script>
+</body>
+</html>
